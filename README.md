@@ -47,7 +47,7 @@ src/
 
 1. Clone the repository:
    ```
-   git clone https://github.com/yourusername/FitTrack.git
+   git clone https://github.com/Jalez/fit-track-mobile.git
    ```
 
 2. Install dependencies:
