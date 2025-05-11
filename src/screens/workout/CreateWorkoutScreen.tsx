@@ -60,7 +60,8 @@ const CreateWorkoutScreen = () => {
         distance: firstSet.distance || 0,
         weight: firstSet.weight || 0,
         restTime: firstSet.restTime || defaultRestTime,
-        // Include grouping info
+        // Include grouping info for superset support
+        groupId: ex.workoutConfig.groupId,
         groupType: ex.workoutConfig.type,
       };
     });
