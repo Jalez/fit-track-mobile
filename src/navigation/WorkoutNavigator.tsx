@@ -4,7 +4,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 // Import screens
 import WorkoutListScreen from '../screens/workout/WorkoutListScreen';
 import CreateWorkoutScreen from '../screens/workout/CreateWorkoutScreen';
-import ActiveWorkoutScreen from '../screens/workout/ActiveWorkoutScreen';
+import ActiveWorkoutScreen from '../screens/workout/activeWorkout';
 
 // Define the param list for type safety
 export type WorkoutStackParamList = {
