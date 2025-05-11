@@ -15,7 +15,13 @@ export interface Exercise {
   type?: string;
   sets: number;
   reps: number;
+  time?: number;
+  distance?: number;
+  weight?: number;
   restTime?: number;
+  // Add these fields for superset support
+  groupId?: string;
+  groupType?: 'single' | 'group';
 }
 
 interface WorkoutContextType {
