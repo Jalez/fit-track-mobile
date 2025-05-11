@@ -12,6 +12,8 @@ interface ExerciseItemProps {
   multiSelectMode: boolean;
   onPress: (exercise: WorkoutExercise) => void;
   onRemove: (exerciseId: string) => void;
+  inGroup?: boolean;
+  sequence?: number;
 }
 
 const ExerciseItem: React.FC<ExerciseItemProps> = ({
@@ -22,6 +24,8 @@ const ExerciseItem: React.FC<ExerciseItemProps> = ({
   multiSelectMode,
   onPress,
   onRemove,
+  inGroup = false,
+  sequence,
 }) => {
   const measurementText = getMeasurementTypeText(item);
 
@@ -29,16 +33,24 @@ const ExerciseItem: React.FC<ExerciseItemProps> = ({
     <ScaleDecorator>
       <TouchableOpacity
         activeOpacity={0.7}
-        onLongPress={multiSelectMode ? undefined : drag}
+        onLongPress={multiSelectMode || inGroup ? undefined : drag}
         onPress={() => onPress(item)}
         disabled={isActive}
         style={[
           styles.exerciseItem,
           isActive && styles.draggingItem,
           isSelected && styles.selectedItem,
-          item.workoutConfig.type !== 'single' && styles.groupedExerciseItem,
+          // Keep most styling the same for group items with just minor adjustments
+          inGroup && styles.groupedExerciseItem,
         ]}
       >
+        {/* Sequence number for exercises in a group */}
+        {inGroup && sequence !== undefined && (
+          <View style={styles.sequenceBadge}>
+            <Text style={styles.sequenceText}>{sequence}</Text>
+          </View>
+        )}
+        
         <View style={styles.exerciseContent}>
           <View style={styles.exerciseHeader}>
             <Text style={styles.exerciseName}>{item.name}</Text>
@@ -64,6 +76,7 @@ const ExerciseItem: React.FC<ExerciseItemProps> = ({
             {isSelected && <Icon name="check" size={16} color="#fff" />}
           </View>
         ) : (
+          // Always show chevron regardless of whether it's in a group
           <Icon name="chevron-right" size={24} color="#666" />
         )}
       </TouchableOpacity>
@@ -75,31 +88,14 @@ const ExerciseItem: React.FC<ExerciseItemProps> = ({
 const renderExerciseConfig = (exercise: WorkoutExercise) => {
   const config = exercise.workoutConfig;
   const setCount = config.sets.length;
-  const type = config.type.charAt(0).toUpperCase() + config.type.slice(1);
   
   return (
     <View style={styles.configBadges}>
-      <View style={[styles.badge, getTypeBadgeStyle(config.type)]}>
-        <Text style={styles.badgeText}>{type}</Text>
-      </View>
       <View style={styles.badge}>
         <Text style={styles.badgeText}>{setCount} sets</Text>
       </View>
     </View>
   );
-};
-
-const getTypeBadgeStyle = (type: string) => {
-  switch(type) {
-    case 'super':
-      return styles.supersetBadge;
-    case 'tri':
-      return styles.trisetBadge;
-    case 'circuit':
-      return styles.circuitBadge;
-    default:
-      return {};
-  }
 };
 
 const getMeasurementTypeText = (exercise: WorkoutExercise) => {
@@ -118,6 +114,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: '#fff',
+    width:"90%",
     borderRadius: 8,
     padding: 16,
     marginBottom: 12,
@@ -147,8 +144,23 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   groupedExerciseItem: {
-    borderLeftWidth: 4,
-    borderLeftColor: '#5D3FD3',
+    // Maintain most of the original styling except marginBottom
+    marginBottom: 0,
+    // Keep shadow, background, etc. the same as normal items
+  },
+  sequenceBadge: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: 'rgba(93, 63, 211, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 8,
+  },
+  sequenceText: {
+    color: '#5D3FD3',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
   exerciseContent: {
     flex: 1,
@@ -186,15 +198,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginRight: 8,
     marginBottom: 4,
-  },
-  supersetBadge: {
-    backgroundColor: '#5D3FD3',
-  },
-  trisetBadge: {
-    backgroundColor: '#FF9500',
-  },
-  circuitBadge: {
-    backgroundColor: '#34C759',
   },
   badgeText: {
     color: '#fff',
