@@ -14,13 +14,14 @@ export interface Exercise {
 
 export interface WorkoutExercise extends Exercise {
   workoutConfig: {
-    type: 'single' | 'super' | 'tri' | 'circuit';
+    type: 'single' | 'group';
+    groupId?:string;
     sets: Array<{
+      restTime: number;
       reps?: number;
       time?: number;
       weight?: number;
       distance?: number;
-      restTime: number;
     }>;
   };
 }
