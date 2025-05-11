@@ -26,7 +26,7 @@ const ExerciseSelectionModal: React.FC<ExerciseSelectionModalProps> = ({
   onSelectExercise,
   selectedExercises
 }) => {
-  const { exercises, fetchExercises, isLoading } = useExerciseStore();
+  const { exercises, fetchExercises, isLoading, removeExerciseFromWorkout } = useExerciseStore();
   const [searchQuery, setSearchQuery] = useState('');
   
   useEffect(() => {
@@ -43,46 +43,61 @@ const ExerciseSelectionModal: React.FC<ExerciseSelectionModalProps> = ({
     return selectedExercises.some(ex => ex.id === id);
   };
 
-  const renderExerciseItem = ({ item }: { item: WorkoutExercise }) => (
-    <TouchableOpacity 
-      style={[
-        styles.exerciseItem, 
-        isExerciseSelected(item.id) && styles.selectedExerciseItem
-      ]}
-      onPress={() => onSelectExercise(item)}
-      disabled={isExerciseSelected(item.id)}
-    >
-      <View style={styles.exerciseInfo}>
-        <Text style={styles.exerciseName}>{item.name}</Text>
-        <View style={styles.exerciseBadges}>
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>{item.type}</Text>
-          </View>
-          {item.equipment && (
+  const handleExercisePress = (exercise: WorkoutExercise) => {
+    const isSelected = isExerciseSelected(exercise.id);
+    
+    if (isSelected) {
+      // If already selected, remove from workout
+      removeExerciseFromWorkout(exercise.id);
+    } else {
+      // If not selected, add to workout
+      onSelectExercise(exercise);
+    }
+  };
+
+  const renderExerciseItem = ({ item }: { item: WorkoutExercise }) => {
+    const isSelected = isExerciseSelected(item.id);
+    
+    return (
+      <TouchableOpacity 
+        style={[
+          styles.exerciseItem, 
+          isSelected && styles.selectedExerciseItem
+        ]}
+        onPress={() => handleExercisePress(item)}
+      >
+        <View style={styles.exerciseInfo}>
+          <Text style={styles.exerciseName}>{item.name}</Text>
+          <View style={styles.exerciseBadges}>
             <View style={styles.badge}>
-              <Text style={styles.badgeText}>{item.equipment}</Text>
+              <Text style={styles.badgeText}>{item.type}</Text>
             </View>
-          )}
-          {item.difficulty && (
-            <View style={[
-              styles.badge, 
-              item.difficulty === 'beginner' ? styles.beginnerBadge : 
-              item.difficulty === 'intermediate' ? styles.intermediateBadge : 
-              styles.advancedBadge
-            ]}>
-              <Text style={styles.badgeText}>{item.difficulty}</Text>
-            </View>
-          )}
+            {item.equipment && (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{item.equipment}</Text>
+              </View>
+            )}
+            {item.difficulty && (
+              <View style={[
+                styles.badge, 
+                item.difficulty === 'beginner' ? styles.beginnerBadge : 
+                item.difficulty === 'intermediate' ? styles.intermediateBadge : 
+                styles.advancedBadge
+              ]}>
+                <Text style={styles.badgeText}>{item.difficulty}</Text>
+              </View>
+            )}
+          </View>
         </View>
-      </View>
-      
-      {isExerciseSelected(item.id) ? (
-        <Icon name="check-circle" size={24} color="#5D3FD3" />
-      ) : (
-        <Icon name="plus-circle-outline" size={24} color="#999" />
-      )}
-    </TouchableOpacity>
-  );
+        
+        {isSelected ? (
+          <Icon name="check-circle" size={24} color="#5D3FD3" />
+        ) : (
+          <Icon name="plus-circle-outline" size={24} color="#999" />
+        )}
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <Modal
@@ -136,6 +151,12 @@ const ExerciseSelectionModal: React.FC<ExerciseSelectionModalProps> = ({
               }
             />
           )}
+          
+          <View style={styles.helpTextContainer}>
+            <Text style={styles.helpText}>
+              Tip: Tap on a selected exercise to remove it from your workout
+            </Text>
+          </View>
         </View>
       </View>
     </Modal>
@@ -255,6 +276,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
     marginTop: 12,
+  },
+  helpTextContainer: {
+    padding: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+    alignItems: 'center',
+  },
+  helpText: {
+    fontSize: 14,
+    color: '#666',
+    fontStyle: 'italic',
   },
 });
 
