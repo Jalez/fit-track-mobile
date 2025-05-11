@@ -1,14 +1,11 @@
 import React, { useState } from 'react';
 import { 
   View, 
-  Text, 
   TextInput, 
   StyleSheet, 
-  TouchableOpacity,
   Modal,
   Alert
 } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { WorkoutExercise } from '../../models/Exercise';
 import ExerciseSelectionModal from './ExerciseSelectionModal';
 import { useExerciseStore } from '../../store/exerciseStore';
@@ -144,6 +141,10 @@ const WorkoutForm: React.FC<WorkoutFormProps> = ({
     onExercisesChange(data);
   };
 
+  const handleOpenExerciseSelectionModal = () => {
+    setSelectionModalVisible(true);
+  };
+
   return (
     <View style={styles.container}>
       {/* Workout name input */}
@@ -155,7 +156,7 @@ const WorkoutForm: React.FC<WorkoutFormProps> = ({
         placeholderTextColor="rgba(255, 255, 255, 0.6)"
       />
 
-      {/* Multi-select toggle */}
+      {/* Action buttons or Multi-select header */}
       {exercises.length > 0 && (
         <MultiSelectHeader
           multiSelectMode={multiSelectMode}
@@ -163,7 +164,7 @@ const WorkoutForm: React.FC<WorkoutFormProps> = ({
         />
       )}
 
-      {/* Group actions bar */}
+      {/* Group actions bar when in multi-select mode */}
       {multiSelectMode && selectedIds.length > 0 && (
         <GroupActionsBar
           onCreateSuperset={handleCreateSuperset}
@@ -173,7 +174,7 @@ const WorkoutForm: React.FC<WorkoutFormProps> = ({
         />
       )}
 
-      {/* Exercise list */}
+      {/* Exercise list with integrated Add Exercise placeholder */}
       <View style={styles.exerciseList}>
         <ExerciseList
           exercises={exercises}
@@ -182,17 +183,9 @@ const WorkoutForm: React.FC<WorkoutFormProps> = ({
           onDragEnd={handleDragEnd}
           onExercisePress={handleExercisePress}
           onRemoveExercise={handleRemoveExercise}
+          onAddExercisePress={handleOpenExerciseSelectionModal}
         />
       </View>
-
-      {/* Add exercise button */}
-      <TouchableOpacity 
-        style={styles.addExerciseButton}
-        onPress={() => setSelectionModalVisible(true)}
-      >
-        <Icon name="plus" size={24} color="#fff" />
-        <Text style={styles.addExerciseText}>Add Exercise</Text>
-      </TouchableOpacity>
 
       {/* Exercise selection modal */}
       <ExerciseSelectionModal
@@ -237,26 +230,6 @@ const styles = StyleSheet.create({
   },
   exerciseList: {
     flex: 1,
-    marginBottom: 16,
-  },
-  addExerciseButton: {
-    backgroundColor: '#5D3FD3',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 16,
-    borderRadius: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  addExerciseText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-    marginLeft: 8,
   },
 });
 
