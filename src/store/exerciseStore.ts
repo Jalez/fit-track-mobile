@@ -43,6 +43,7 @@ export const useExerciseStore = create<ExerciseStore>((set, get) => ({
         workoutConfig: {
           type: 'single' as const,
           sets: [{ reps: 10, restTime: 60 }], // Default values
+          groupId: undefined,
         }
       }));
       
@@ -85,7 +86,10 @@ export const useExerciseStore = create<ExerciseStore>((set, get) => ({
     set((state) => {
       const updated = [...state.selectedExercises];
       
-      // Find exercises and update their type to 'super'
+      // Generate a unique group ID for this superset
+      const groupId = `superset-${Date.now()}`;
+      
+      // Find exercises and update their type to 'super' with the same groupId
       exerciseIds.forEach(id => {
         const index = updated.findIndex(ex => ex.id === id);
         if (index !== -1) {
@@ -93,7 +97,8 @@ export const useExerciseStore = create<ExerciseStore>((set, get) => ({
             ...updated[index],
             workoutConfig: {
               ...updated[index].workoutConfig,
-              type: 'super'
+              type: 'group',
+              groupId: groupId // Assign the shared group ID
             }
           };
         }
@@ -107,7 +112,10 @@ export const useExerciseStore = create<ExerciseStore>((set, get) => ({
     set((state) => {
       const updated = [...state.selectedExercises];
       
-      // Find exercises and update their type to 'tri'
+      // Generate a unique group ID for this triset
+      const groupId = `triset-${Date.now()}`;
+      
+      // Find exercises and update their type to 'tri' with the same groupId
       exerciseIds.forEach(id => {
         const index = updated.findIndex(ex => ex.id === id);
         if (index !== -1) {
@@ -115,7 +123,8 @@ export const useExerciseStore = create<ExerciseStore>((set, get) => ({
             ...updated[index],
             workoutConfig: {
               ...updated[index].workoutConfig,
-              type: 'tri'
+              type: 'group',
+              groupId: groupId // Assign the shared group ID
             }
           };
         }
@@ -129,7 +138,10 @@ export const useExerciseStore = create<ExerciseStore>((set, get) => ({
     set((state) => {
       const updated = [...state.selectedExercises];
       
-      // Find exercises and update their type to 'circuit'
+      // Generate a unique group ID for this circuit
+      const groupId = `circuit-${Date.now()}`;
+      
+      // Find exercises and update their type to 'circuit' with the same groupId
       exerciseIds.forEach(id => {
         const index = updated.findIndex(ex => ex.id === id);
         if (index !== -1) {
@@ -137,7 +149,8 @@ export const useExerciseStore = create<ExerciseStore>((set, get) => ({
             ...updated[index],
             workoutConfig: {
               ...updated[index].workoutConfig,
-              type: 'circuit'
+              type: 'group',
+              groupId: groupId // Assign the shared group ID
             }
           };
         }
@@ -158,7 +171,8 @@ export const useExerciseStore = create<ExerciseStore>((set, get) => ({
           ...updated[index],
           workoutConfig: {
             ...updated[index].workoutConfig,
-            type: 'single'
+            type: 'single',
+            groupId: undefined // Remove group ID
           }
         };
       }
