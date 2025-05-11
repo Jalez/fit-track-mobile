@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 interface MultiSelectHeaderProps {
@@ -11,52 +11,84 @@ const MultiSelectHeader: React.FC<MultiSelectHeaderProps> = ({
   multiSelectMode,
   onToggle,
 }) => {
+  if (multiSelectMode) {
+    return (
+      <View style={styles.container}>
+        <TouchableOpacity 
+          style={styles.exitButton} 
+          onPress={onToggle}
+        >
+          <Icon name="close" size={20} color="#fff" />
+          <Text style={styles.exitButtonText}>Exit Selection</Text>
+        </TouchableOpacity>
+        <Text style={styles.helpText}>Select 2+ exercises to create a superset</Text>
+      </View>
+    );
+  }
+
   return (
-    <View style={styles.multiSelectToggle}>
+    <View style={styles.container}>
       <TouchableOpacity 
-        style={[styles.multiSelectButton, multiSelectMode && styles.multiSelectButtonActive]} 
+        style={styles.createButton} 
         onPress={onToggle}
       >
-        <Icon 
-          name={multiSelectMode ? "checkbox-multiple-marked" : "checkbox-multiple-blank-outline"} 
-          size={20} 
-          color={multiSelectMode ? "#fff" : "#5D3FD3"} 
-        />
-        <Text 
-          style={[styles.multiSelectButtonText, multiSelectMode && styles.multiSelectButtonTextActive]}
-        >
-          {multiSelectMode ? "Exit Selection" : "Select Multiple"}
-        </Text>
+        <Icon name="lightning-bolt" size={20} color="#fff" />
+        <Text style={styles.createButtonText}>Create Superset</Text>
       </TouchableOpacity>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  multiSelectToggle: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginBottom: 12,
+  container: {
+    marginBottom: 16,
+    alignItems: 'center',
   },
-  multiSelectButton: {
+  createButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 16,
-  },
-  multiSelectButtonActive: {
     backgroundColor: '#5D3FD3',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    alignSelf: 'center',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
   },
-  multiSelectButtonText: {
-    color: '#5D3FD3',
+  createButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  exitButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#8E8E93',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    marginBottom: 8,
+  },
+  exitButtonText: {
+    color: '#fff',
     fontSize: 14,
     fontWeight: '500',
     marginLeft: 6,
   },
-  multiSelectButtonTextActive: {
-    color: '#fff',
+  helpText: {
+    fontSize: 14,
+    color: '#666',
+    fontStyle: 'italic',
   },
 });
 
