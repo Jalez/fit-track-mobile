@@ -24,6 +24,11 @@ interface UseActiveWorkoutReturn {
   handleNextExerciseGroup: () => void;
   finishWorkout: () => void;
   setWorkoutComplete: (value: boolean) => void;
+  // New superset navigation state and methods
+  supersetExerciseIndex: number;
+  handlePreviousSupersetExercise: () => void;
+  handleNextSupersetExercise: () => void;
+  updateSupersetExerciseIndex: (index: number) => void;
 }
 
 // Track adjusted values for exercises
@@ -48,6 +53,9 @@ export const useActiveWorkout = ({ workoutId }: UseActiveWorkoutProps): UseActiv
   
   // Track adjusted values (reps and rest times) for each exercise set
   const [exerciseAdjustments, setExerciseAdjustments] = useState<ExerciseAdjustments>({});
+  
+  // Track active exercise within a superset group
+  const [supersetExerciseIndex, setSupersetExerciseIndex] = useState(0);
   
   const [isResting, setIsResting] = useState(false);
   const [restTime, setRestTime] = useState(60);
@@ -186,6 +194,11 @@ export const useActiveWorkout = ({ workoutId }: UseActiveWorkoutProps): UseActiv
     }
   }, [currentGroupIndex, exerciseGroups]);
 
+  // Reset the superset exercise index when changing exercise groups
+  useEffect(() => {
+    setSupersetExerciseIndex(0);
+  }, [currentGroupIndex]);
+
   useEffect(() => {
     let intervalId: NodeJS.Timeout | null = null;
     if (isResting) {
@@ -322,17 +335,39 @@ export const useActiveWorkout = ({ workoutId }: UseActiveWorkoutProps): UseActiv
     }
   };
 
+  const handleNextSupersetExercise = () => {
+    const currentGroup = exerciseGroups[currentGroupIndex];
+    if (currentGroup?.type === 'superset' && supersetExerciseIndex < currentGroup.exercises.length - 1) {
+      setSupersetExerciseIndex(prev => prev + 1);
+    }
+  };
+
+  const handlePreviousSupersetExercise = () => {
+    if (supersetExerciseIndex > 0) {
+      setSupersetExerciseIndex(prev => prev - 1);
+    }
+  };
+
+  const updateSupersetExerciseIndex = (index: number) => {
+    const currentGroup = exerciseGroups[currentGroupIndex];
+    if (currentGroup?.type === 'superset' && index >= 0 && index < currentGroup.exercises.length) {
+      setSupersetExerciseIndex(index);
+    }
+  };
+  
   const skipRest = () => {
     setIsResting(false);
     // Move to the next group after skipping rest
     if (currentGroupIndex < exerciseGroups.length - 1) {
       setCurrentGroupIndex(prev => prev + 1);
+      setSupersetExerciseIndex(0); // Reset superset index when moving to next group
     }
   };
 
   const handleNextExerciseGroup = () => {
     if (exerciseGroups && currentGroupIndex < exerciseGroups.length - 1) {
       setCurrentGroupIndex(prev => prev + 1);
+      setSupersetExerciseIndex(0); // Reset superset index when moving to next group
     } else {
       setWorkoutComplete(true);
     }
@@ -341,6 +376,13 @@ export const useActiveWorkout = ({ workoutId }: UseActiveWorkoutProps): UseActiv
   const handlePreviousExerciseGroup = () => {
     if (currentGroupIndex > 0) {
       setCurrentGroupIndex(prev => prev - 1);
+      // When going to the previous group, set the superset index to the last exercise in that group
+      const prevGroup = exerciseGroups[currentGroupIndex - 1];
+      if (prevGroup?.type === 'superset') {
+        setSupersetExerciseIndex(prevGroup.exercises.length - 1);
+      } else {
+        setSupersetExerciseIndex(0);
+      }
     }
   };
 
@@ -363,6 +405,11 @@ export const useActiveWorkout = ({ workoutId }: UseActiveWorkoutProps): UseActiv
     handlePreviousExerciseGroup,
     handleNextExerciseGroup,
     finishWorkout,
-    setWorkoutComplete
+    setWorkoutComplete,
+    // New superset navigation state and methods
+    supersetExerciseIndex,
+    handlePreviousSupersetExercise,
+    handleNextSupersetExercise,
+    updateSupersetExerciseIndex
   };
 };
