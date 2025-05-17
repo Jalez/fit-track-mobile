@@ -1,39 +1,25 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { ExerciseGroup, CompletedSetsMap } from '../types';
 import ExerciseCard from './ExerciseCard';
-
-const { width } = Dimensions.get('window');
 
 interface SupersetGroupProps {
   group: ExerciseGroup;
   completedSetsMap: CompletedSetsMap;
   onCompleteSet: (exerciseId: string, actualReps?: number, actualRestTime?: number) => void;
+  activeExerciseIndex: number;
 }
 
 const SupersetGroup: React.FC<SupersetGroupProps> = ({ 
   group, 
   completedSetsMap, 
-  onCompleteSet
+  onCompleteSet,
+  activeExerciseIndex
 }) => {
-  const [activeExerciseIndex, setActiveExerciseIndex] = useState(0);
-
-  const handlePrevExercise = () => {
-    if (activeExerciseIndex > 0) {
-      setActiveExerciseIndex(activeExerciseIndex - 1);
-    }
-  };
-
-  const handleNextExercise = () => {
-    if (activeExerciseIndex < group.exercises.length - 1) {
-      setActiveExerciseIndex(activeExerciseIndex + 1);
-    }
-  };
-
   return (
     <View style={styles.supersetContainer}>
-      {/* Superset Header */}
+      {/* Superset Header - simplified with just a border indicator */}
       <View style={styles.supersetHeaderContainer}>
         <View style={styles.supersetBadge}>
           <Icon name="lightning-bolt" size={20} color="#fff" />
@@ -46,52 +32,20 @@ const SupersetGroup: React.FC<SupersetGroupProps> = ({
         </View>
       </View>
 
-      {/* Navigation Controls */}
-      <View style={styles.navigationContainer}>
-        <TouchableOpacity 
-          style={[styles.navButton, activeExerciseIndex === 0 && styles.navButtonDisabled]}
-          onPress={handlePrevExercise}
-          disabled={activeExerciseIndex === 0}
-        >
-          <Icon name="chevron-left" size={28} color={activeExerciseIndex === 0 ? "#ccc" : "#5D3FD3"} />
-        </TouchableOpacity>
-        
-        <View style={styles.navInfoContainer}>
-          <Text style={styles.navInfoText}>
-            Exercise {activeExerciseIndex + 1} of {group.exercises.length}
-          </Text>
-        </View>
-        
-        <TouchableOpacity 
-          style={[styles.navButton, activeExerciseIndex === group.exercises.length - 1 && styles.navButtonDisabled]}
-          onPress={handleNextExercise}
-          disabled={activeExerciseIndex === group.exercises.length - 1}
-        >
-          <Icon name="chevron-right" size={28} color={activeExerciseIndex === group.exercises.length - 1 ? "#ccc" : "#5D3FD3"} />
-        </TouchableOpacity>
-      </View>
-
-      {/* Visual Exercise Connector Bar */}
-      <View style={styles.exerciseConnectorBar}>
-        {group.exercises.map((exercise, index) => (
-          <React.Fragment key={`connector-${exercise.id}`}>
-            <TouchableOpacity 
-              style={[styles.exerciseIndicator, index === activeExerciseIndex && styles.activeExerciseIndicator]}
-              onPress={() => setActiveExerciseIndex(index)}
-            >
-              <Text style={[styles.exerciseIndicatorText, index === activeExerciseIndex && styles.activeExerciseIndicatorText]}>
-                {index + 1}
-              </Text>
-            </TouchableOpacity>
-            
-            {index < group.exercises.length - 1 && (
-              <View style={styles.connectorLine} />
-            )}
-          </React.Fragment>
+      {/* Exercise progress indicator - simplified */}
+      <View style={styles.exerciseProgressBar}>
+        {group.exercises.map((_, index) => (
+          <View 
+            key={index}
+            style={[
+              styles.progressDot,
+              index === activeExerciseIndex && styles.activeProgressDot
+            ]}
+          />
         ))}
       </View>
 
-      {/* Active Exercise Card */}
+      {/* Current Exercise Card */}
       <View style={styles.activeExerciseContainer}>
         <ExerciseCard
           exercise={group.exercises[activeExerciseIndex]}
@@ -116,20 +70,6 @@ const SupersetGroup: React.FC<SupersetGroupProps> = ({
           </View>
         )}
       </View>
-
-      {/* Pagination dots */}
-      <View style={styles.paginationDotsContainer}>
-        {group.exercises.map((_, index) => (
-          <TouchableOpacity 
-            key={index}
-            style={[
-              styles.paginationDot,
-              index === activeExerciseIndex && styles.activePaginationDot
-            ]}
-            onPress={() => setActiveExerciseIndex(index)}
-          />
-        ))}
-      </View>
     </View>
   );
 };
@@ -137,6 +77,11 @@ const SupersetGroup: React.FC<SupersetGroupProps> = ({
 const styles = StyleSheet.create({
   supersetContainer: {
     marginBottom: 24,
+    borderWidth: 2,
+    borderRadius: 16,
+    borderColor: '#5D3FD3',
+    padding: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
   },
   supersetHeaderContainer: {
     flexDirection: 'row',
@@ -172,82 +117,24 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 14,
   },
-  navigationContainer: {
+  exerciseProgressBar: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
   },
-  navButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  navButtonDisabled: {
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
-  },
-  navInfoContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-  },
-  navInfoText: {
-    color: '#5D3FD3',
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  exerciseConnectorBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 20,
-    paddingHorizontal: 10,
-  },
-  exerciseIndicator: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  activeExerciseIndicator: {
-    backgroundColor: '#5D3FD3',
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    elevation: 3,
-  },
-  exerciseIndicatorText: {
-    fontSize: 16,
-    color: '#666',
-    fontWeight: 'bold',
-  },
-  activeExerciseIndicatorText: {
-    color: '#fff',
-    fontSize: 18,
-  },
-  connectorLine: {
-    height: 2,
-    flex: 1,
+  progressDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
     backgroundColor: 'rgba(93, 63, 211, 0.3)',
-    marginHorizontal: 5,
+    marginHorizontal: 4,
+  },
+  activeProgressDot: {
+    backgroundColor: '#5D3FD3',
+    width: 12,
+    height: 12,
+    borderRadius: 6,
   },
   activeExerciseContainer: {
     position: 'relative',
@@ -278,27 +165,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333',
     marginLeft: 8,
-  },
-  paginationDotsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 8,
-    marginBottom: 16,
-  },
-  paginationDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: 'rgba(93, 63, 211, 0.3)',
-    marginHorizontal: 4,
-  },
-  activePaginationDot: {
-    backgroundColor: '#5D3FD3',
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-  },
+  }
 });
 
 export default SupersetGroup;
