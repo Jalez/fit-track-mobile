@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, TextInput } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { WorkoutExercise } from '../../../../models/Exercise';
 import { getExerciseIcon } from '../utils';
@@ -10,7 +10,7 @@ interface ExerciseCardProps {
   index: number;
   isInSuperset?: boolean;
   completedSetsMap: CompletedSetsMap;
-  onCompleteSet: (exerciseId: string) => void;
+  onCompleteSet: (exerciseId: string, actualReps?: number, actualRestTime?: number) => void;
 }
 
 const ExerciseCard: React.FC<ExerciseCardProps> = ({
@@ -26,14 +26,31 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
   const allSetsCompleted = completedSets >= totalSets;
 
   // Get reps either from workoutConfig sets or from exercise.reps
-  const reps = exercise.workoutConfig?.sets?.[0]?.reps || exercise.reps || 0;
+  const defaultReps = exercise.workoutConfig?.sets?.[0]?.reps || exercise.reps || 0;
   // Get rest time either from workoutConfig sets or from exercise.restTime
-  const restTime = exercise.workoutConfig?.sets?.[0]?.restTime || exercise.restTime || 60;
+  const defaultRestTime = exercise.workoutConfig?.sets?.[0]?.restTime || exercise.restTime || 60;
+
+  // State for editing reps and rest time
+  const [reps, setReps] = useState(defaultReps.toString());
+  const [restTime, setRestTime] = useState(defaultRestTime.toString());
+  const [isEditing, setIsEditing] = useState(false);
 
   // Determine if this is the last exercise in a superset
   // We'll show "TRANSITION" for exercises in the middle of a superset
   // and "REST" for the last exercise in a superset or single exercises
   const isLastInSuperset = !isInSuperset || exercise.workoutConfig?.isLastInGroup;
+
+  const handleCompleteSet = () => {
+    // Convert inputs to numbers
+    const actualReps = parseInt(reps, 10) || defaultReps;
+    const actualRestTime = parseInt(restTime, 10) || defaultRestTime;
+    
+    // Call the parent handler with the actual values
+    onCompleteSet(exercise.id, actualReps, actualRestTime);
+    
+    // Reset editing state
+    setIsEditing(false);
+  };
 
   return (
     <View
@@ -87,37 +104,93 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
           </View>
           <View style={styles.detailSeparator} />
           <View style={styles.detailItem}>
-            <Text style={styles.detailValue}>
-              {reps}
-            </Text>
+            {isEditing ? (
+              <TextInput
+                value={reps}
+                onChangeText={setReps}
+                keyboardType="number-pad"
+                style={styles.editInput}
+                selectTextOnFocus={true}
+              />
+            ) : (
+              <Text style={styles.detailValue}>
+                {reps}
+              </Text>
+            )}
             <Text style={styles.detailLabel}>REPS</Text>
           </View>
           <View style={styles.detailSeparator} />
           <View style={styles.detailItem}>
-            <Text style={styles.detailValue}>
-              {restTime}s
-            </Text>
+            {isEditing ? (
+              <TextInput
+                value={restTime}
+                onChangeText={setRestTime}
+                keyboardType="number-pad"
+                style={styles.editInput}
+                selectTextOnFocus={true}
+              />
+            ) : (
+              <Text style={styles.detailValue}>
+                {restTime}s
+              </Text>
+            )}
             <Text style={styles.detailLabel}>
               {isInSuperset && !isLastInSuperset ? 'TRANSITION' : 'REST'}
             </Text>
           </View>
         </View>
       </View>
+      
+      {!allSetsCompleted && !isEditing && (
+        <View style={styles.actionButtonsContainer}>
+          <TouchableOpacity
+            style={styles.editButton}
+            onPress={() => setIsEditing(true)}
+          >
+            <Icon name="pencil" size={16} color="#fff" />
+            <Text style={styles.editButtonText}>Edit Values</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={styles.completeSetButton}
+            onPress={handleCompleteSet}
+          >
+            <Icon name="check" size={16} color="#fff" />
+            <Text style={styles.completeButtonText}>Complete Set</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+      
+      {!allSetsCompleted && isEditing && (
+        <View style={styles.actionButtonsContainer}>
+          <TouchableOpacity
+            style={styles.cancelButton}
+            onPress={() => {
+              setReps(defaultReps.toString());
+              setRestTime(defaultRestTime.toString());
+              setIsEditing(false);
+            }}
+          >
+            <Icon name="close" size={16} color="#fff" />
+            <Text style={styles.cancelButtonText}>Cancel</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={styles.saveButton}
+            onPress={handleCompleteSet}
+          >
+            <Icon name="content-save" size={16} color="#fff" />
+            <Text style={styles.saveButtonText}>Save & Complete</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
-      <TouchableOpacity 
-        style={[
-          styles.completeButton,
-          allSetsCompleted && styles.completeButtonDisabled
-        ]}
-        onPress={() => onCompleteSet(exercise.id)}
-        disabled={allSetsCompleted}
-      >
-        <Text style={styles.completeButtonText}>
-          {allSetsCompleted 
-            ? 'All Sets Completed' 
-            : 'Complete Set'}
-        </Text>
-      </TouchableOpacity>
+      {allSetsCompleted && (
+        <View style={styles.completedButtonContainer}>
+          <Icon name="check-circle" size={24} color="#4CAF50" style={styles.completedIcon} />
+          <Text style={styles.completedButtonText}>All Sets Completed</Text>
+        </View>
+      )}
     </View>
   );
 };
@@ -249,6 +322,53 @@ const styles = StyleSheet.create({
     height: '100%',
     backgroundColor: '#ddd',
   },
+  editInput: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#5D3FD3',
+    borderWidth: 1,
+    borderColor: '#5D3FD3',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    textAlign: 'center',
+    minWidth: 50,
+  },
+  actionButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  completeSetButton: {
+    backgroundColor: '#5D3FD3',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 30,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+    flex: 1.5,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  editButton: {
+    backgroundColor: '#3F50B5',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 30,
+    marginRight: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   completeButton: {
     backgroundColor: '#5D3FD3',
     paddingVertical: 12,
@@ -259,14 +379,84 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
+  completeButtonDisabled: {
+    backgroundColor: '#4CAF50',
+  },
   completeButtonText: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#fff',
     textAlign: 'center',
     fontWeight: 'bold',
+    marginLeft: 4,
   },
-  completeButtonDisabled: {
+  editButtonText: {
+    fontSize: 14,
+    color: '#fff',
+    textAlign: 'center',
+    fontWeight: 'bold',
+    marginLeft: 4,
+  },
+  cancelButton: {
+    backgroundColor: '#757575',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 30,
+    marginRight: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cancelButtonText: {
+    fontSize: 14,
+    color: '#fff',
+    textAlign: 'center',
+    fontWeight: 'bold',
+    marginLeft: 4,
+  },
+  saveButton: {
     backgroundColor: '#4CAF50',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 30,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+    flex: 1.5,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  saveButtonText: {
+    fontSize: 14,
+    color: '#fff',
+    textAlign: 'center',
+    fontWeight: 'bold',
+    marginLeft: 4,
+  },
+  completedButtonContainer: {
+    backgroundColor: 'rgba(76, 175, 80, 0.1)',
+    paddingVertical: 12,
+    borderRadius: 30,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  completedIcon: {
+    marginRight: 8,
+  },
+  completedButtonText: {
+    fontSize: 16,
+    color: '#4CAF50',
+    textAlign: 'center',
+    fontWeight: 'bold',
   },
 });
 
