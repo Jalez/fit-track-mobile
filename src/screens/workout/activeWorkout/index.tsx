@@ -32,7 +32,12 @@ const ActiveWorkoutScreen: React.FC = () => {
     skipRest,
     handlePreviousExerciseGroup,
     handleNextExerciseGroup,
-    finishWorkout
+    finishWorkout,
+    // New state and handlers for superset navigation
+    supersetExerciseIndex,
+    handlePreviousSupersetExercise,
+    handleNextSupersetExercise,
+    updateSupersetExerciseIndex
   } = useActiveWorkout({ workoutId });
 
   if (loading || !workout || exerciseGroups.length === 0) {
@@ -60,6 +65,39 @@ const ActiveWorkoutScreen: React.FC = () => {
 
   const currentGroup = exerciseGroups[currentGroupIndex];
   const nextGroup = exerciseGroups[currentGroupIndex + 1];
+
+  // Handle navigation logic
+  const handlePrevious = () => {
+    // If we're in a superset and not at the first exercise, go to previous exercise in superset
+    if (
+      currentGroup.type === 'superset' && 
+      supersetExerciseIndex > 0
+    ) {
+      handlePreviousSupersetExercise();
+    } else {
+      // Otherwise go to previous group
+      handlePreviousExerciseGroup();
+    }
+  };
+  
+  const handleNext = () => {
+    // If we're in a superset and not at the last exercise, go to next exercise in superset
+    if (
+      currentGroup.type === 'superset' && 
+      supersetExerciseIndex < currentGroup.exercises.length - 1
+    ) {
+      handleNextSupersetExercise();
+    } else {
+      // Otherwise go to next group
+      handleNextExerciseGroup();
+    }
+  };
+
+  const isFirstExercise = currentGroupIndex === 0 && 
+    (currentGroup.type === 'single' || supersetExerciseIndex === 0);
+  
+  const isLastExercise = currentGroupIndex === exerciseGroups.length - 1 && 
+    (currentGroup.type === 'single' || supersetExerciseIndex === currentGroup.exercises.length - 1);
 
   return (
     <BackgroundContainer>
@@ -100,15 +138,18 @@ const ActiveWorkoutScreen: React.FC = () => {
               group={currentGroup} 
               completedSetsMap={completedSetsMap}
               onCompleteSet={handleCompleteSet}
+              activeExerciseIndex={supersetExerciseIndex}
             />
           )}
 
           <NavigationControls 
             currentGroupIndex={currentGroupIndex}
             exerciseGroups={exerciseGroups}
-            onPrevious={handlePreviousExerciseGroup}
-            onNext={handleNextExerciseGroup}
+            onPrevious={handlePrevious}
+            onNext={handleNext}
             onFinish={finishWorkout}
+            isFirstExercise={isFirstExercise}
+            isLastExercise={isLastExercise}
           />
         </ScrollView>
       )}
