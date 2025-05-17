@@ -9,7 +9,7 @@ const { width } = Dimensions.get('window');
 interface SupersetGroupProps {
   group: ExerciseGroup;
   completedSetsMap: CompletedSetsMap;
-  onCompleteSet: (exerciseId: string) => void;
+  onCompleteSet: (exerciseId: string, actualReps?: number, actualRestTime?: number) => void;
 }
 
 const SupersetGroup: React.FC<SupersetGroupProps> = ({ 

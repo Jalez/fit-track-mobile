@@ -66,7 +66,7 @@ export const groupExercises = (exercises: WorkoutExercise[]): ExerciseGroup[] =>
       for (let i = 0; i < exerciseClone.sets; i++) {
         exerciseClone.workoutConfig.sets.push({
           reps: exerciseClone.reps,
-          restTime: exerciseClone.restTime
+          restTime: exerciseClone.restTime || 60 // Provide a default value of 60 if restTime is undefined
         });
       }
     }

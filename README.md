@@ -9,6 +9,29 @@ FitTrack is a mobile sports application designed to help users create and manage
 - **Rest Timer**: Manage rest periods between sets to optimize workout efficiency.
 - **User Authentication**: Secure login and registration for personalized user experiences.
 - **Exercise Library**: Browse and manage a library of exercises to include in workout routines.
+- **Supersets & Circuit Training**: Group exercises into supersets, trisets, and circuits for advanced workout programming.
+- **Interactive Workout Execution**: Enhanced UI for executing workouts with visual cues for exercise grouping.
+
+## Recent Updates
+
+### May 11, 2025 - Enhanced Exercise Grouping System
+
+- **Exercise Grouping**: Implemented a comprehensive system for creating and managing supersets, trisets, and circuit training workouts
+- **Improved Exercise Selection**: Enhanced the exercise selection modal with toggle functionality for easier exercise management
+- **Redesigned Active Workout Experience**: Completely overhauled the workout execution UI with:
+  - Intuitive navigation between exercise groups
+  - Visual indicators for supersets and grouped exercises
+  - Enhanced rest timers with intelligent transitions
+  - Better visualization of workout progress
+- **Data Model Improvements**: Updated the underlying data structures to support complex exercise grouping
+
+### Future Development Plans
+
+- **Performance Analytics**: Implementation of workout history tracking and performance analytics
+- **Exercise Video Demonstrations**: Integration of video demonstrations for proper exercise form
+- **Custom Exercise Creation**: Allow users to create and save custom exercises
+- **Workout Templates**: Pre-defined workout templates for various fitness goals
+- **Social Features**: Share workouts and achievements with friends
 
 ## Project Structure
 

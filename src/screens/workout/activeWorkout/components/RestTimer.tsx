@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { ExerciseGroup } from '../types';
+import { formatTime } from '../utils';
 
 interface RestTimerProps {
   restTime: number;
@@ -16,7 +17,7 @@ const RestTimer: React.FC<RestTimerProps> = ({
   return (
     <View style={styles.restContainer}>
       <Text style={styles.restTitle}>Rest Time</Text>
-      <Text style={styles.restTimer}>{restTime}</Text>
+      <Text style={styles.restTimer}>{formatTime(restTime)}</Text>
       <Text style={styles.restNextExercise}>
         Next: {nextGroup ? 
           (nextGroup.type === 'superset' ? `Superset with ${nextGroup.exercises.length} exercises` : nextGroup.exercises[0]?.name) 
