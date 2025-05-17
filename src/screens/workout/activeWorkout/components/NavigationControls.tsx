@@ -9,6 +9,8 @@ interface NavigationControlsProps {
   onPrevious: () => void;
   onNext: () => void;
   onFinish: () => void;
+  isFirstExercise?: boolean;
+  isLastExercise?: boolean;
 }
 
 const NavigationControls: React.FC<NavigationControlsProps> = ({
@@ -16,28 +18,31 @@ const NavigationControls: React.FC<NavigationControlsProps> = ({
   exerciseGroups,
   onPrevious,
   onNext,
-  onFinish
+  onFinish,
+  isFirstExercise = false,
+  isLastExercise = false
 }) => {
   const nextGroup = exerciseGroups[currentGroupIndex + 1];
+  const showNextPreview = !isLastExercise && currentGroupIndex < exerciseGroups.length - 1;
 
   return (
     <>
       {/* Navigation buttons for exercise groups */}
       <View style={styles.navigationButtons}>
         <TouchableOpacity 
-          style={[styles.navButton, currentGroupIndex === 0 ? styles.navButtonDisabled : null]}
+          style={[styles.navButton, isFirstExercise ? styles.navButtonDisabled : null]}
           onPress={onPrevious}
-          disabled={currentGroupIndex === 0}
+          disabled={isFirstExercise}
         >
           <Icon 
             name="arrow-left" 
             size={24} 
-            color={currentGroupIndex === 0 ? "#aaa" : "#5D3FD3"} 
+            color={isFirstExercise ? "#aaa" : "#5D3FD3"} 
           />
           <Text 
             style={[
               styles.navButtonText, 
-              currentGroupIndex === 0 ? styles.navButtonTextDisabled : null
+              isFirstExercise ? styles.navButtonTextDisabled : null
             ]}
           >
             Previous
@@ -45,16 +50,24 @@ const NavigationControls: React.FC<NavigationControlsProps> = ({
         </TouchableOpacity>
         
         <TouchableOpacity 
-          style={styles.navButton}
+          style={[styles.navButton, isLastExercise ? styles.navButtonDisabled : null]}
           onPress={onNext}
+          disabled={isLastExercise}
         >
-          <Text style={styles.navButtonText}>Next</Text>
-          <Icon name="arrow-right" size={24} color="#5D3FD3" />
+          <Text style={[
+            styles.navButtonText,
+            isLastExercise ? styles.navButtonTextDisabled : null
+          ]}>Next</Text>
+          <Icon 
+            name="arrow-right" 
+            size={24} 
+            color={isLastExercise ? "#aaa" : "#5D3FD3"} 
+          />
         </TouchableOpacity>
       </View>
 
       {/* Next exercise preview */}
-      {currentGroupIndex < exerciseGroups.length - 1 && (
+      {showNextPreview && (
         <View style={styles.nextExerciseContainer}>
           <Text style={styles.nextExerciseLabel}>NEXT UP</Text>
           <Text style={styles.nextExerciseName}>
@@ -133,6 +146,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.85)',
     paddingVertical: 14,
     borderRadius: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginVertical: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
