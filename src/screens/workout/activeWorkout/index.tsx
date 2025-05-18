@@ -129,6 +129,8 @@ const ActiveWorkoutScreen: React.FC = () => {
           restTime={restTime}
           nextGroup={nextGroup} 
           onSkipRest={skipRest}
+          currentGroup={currentGroup}
+          completedSetsMap={completedSetsMap}
         />
       ) : (
         <ScrollView 

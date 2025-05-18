@@ -78,7 +78,7 @@ export const useActiveWorkout = ({ workoutId }: UseActiveWorkoutProps): UseActiv
             type: 'strength',
             sets: 4,
             reps: 10,
-            restTime: 90,
+            restTime: 10,
           },
           {
             id: '2',
@@ -207,10 +207,40 @@ export const useActiveWorkout = ({ workoutId }: UseActiveWorkoutProps): UseActiv
           if (prev <= 1) {
             if (intervalId) clearInterval(intervalId);
             setIsResting(false);
-            // Automatically advance to the next group when rest time is complete
-            if (currentGroupIndex < exerciseGroups.length - 1) {
-              setCurrentGroupIndex(prev => prev + 1);
+            
+            // Check if there are still sets left in the current group
+            const currentGroup = exerciseGroups[currentGroupIndex];
+            if (currentGroup) {
+              const isSuperset = currentGroup.type === 'superset';
+              
+              // Check if all exercises in this group have completed all their sets
+              const allSetsInGroupCompleted = currentGroup.exercises.every(ex => {
+                const totalSets = ex.workoutConfig?.sets?.length || ex.sets || 0;
+                const completedSets = completedSetsMap[ex.id] || 0;
+                return completedSets >= totalSets;
+              });
+              
+              if (allSetsInGroupCompleted) {
+                // If all sets are completed in this group, move to the next group
+                if (currentGroupIndex < exerciseGroups.length - 1) {
+                  setCurrentGroupIndex(prev => prev + 1);
+                  setSupersetExerciseIndex(0);
+                }
+              } else if (isSuperset) {
+                // For supersets, find the first exercise that still has sets to complete
+                const nextExerciseIndex = currentGroup.exercises.findIndex(ex => {
+                  const totalSets = ex.workoutConfig?.sets?.length || ex.sets || 0;
+                  const completedSets = completedSetsMap[ex.id] || 0;
+                  return completedSets < totalSets;
+                });
+                
+                if (nextExerciseIndex !== -1) {
+                  setSupersetExerciseIndex(nextExerciseIndex);
+                }
+              }
+              // For normal exercises, we stay on the same exercise if it has sets left
             }
+            
             return 60; // Reset for next rest period
           }
           return prev - 1;
@@ -221,7 +251,7 @@ export const useActiveWorkout = ({ workoutId }: UseActiveWorkoutProps): UseActiv
     return () => {
       if (intervalId) clearInterval(intervalId);
     };
-  }, [isResting, currentGroupIndex, exerciseGroups.length]);
+  }, [isResting, currentGroupIndex, exerciseGroups, completedSetsMap]);
 
   useEffect(() => {
     // Overall workout timer
@@ -302,36 +332,57 @@ export const useActiveWorkout = ({ workoutId }: UseActiveWorkoutProps): UseActiv
       return newCompletedSetsMap[ex.id] >= totalSets;
     });
     
-    // If all sets of all exercises in the group are completed
-    if (allExercisesSetsCompleted) {
-      // If there's another group, start rest period
-      if (currentGroupIndex < exerciseGroups.length - 1) {
-        setIsResting(true);
-        
-        // Use the rest time from the last exercise in the group
-        // prefer actual rest time if available
-        const lastExercise = currentGroup.exercises[currentGroup.exercises.length - 1];
-        const lastExId = lastExercise.id;
-        const lastSetIndex = (newCompletedSetsMap[lastExId] || 1) - 1;
-        
-        // Get actual rest time if available, otherwise use default
-        const actualRestTime = exerciseAdjustments[lastExId]?.actualRestTimes[lastSetIndex];
-        
-        if (actualRestTime !== undefined) {
-          setRestTime(actualRestTime);
+    // Determine if we should start a rest period
+    const isSuperset = currentGroup.type === 'superset';
+    const exerciseIndex = currentGroup.exercises.findIndex(ex => ex.id === exerciseId);
+    const isLastExerciseInSuperset = isSuperset && exerciseIndex === currentGroup.exercises.length - 1;
+    const isNotInSuperset = !isSuperset;
+    
+    // Get the rest time to use
+    let restTimeToUse = 60; // Default fallback
+    const lastSetIndex = (newCompletedSetsMap[exerciseId] || 1) - 1;
+    
+    // Get actual rest time if available, otherwise use default
+    const actualRestTimeValue = exerciseAdjustments[exerciseId]?.actualRestTimes[lastSetIndex];
+    
+    if (actualRestTimeValue !== undefined) {
+      restTimeToUse = actualRestTimeValue;
+    } else {
+      restTimeToUse = exercise.workoutConfig?.sets?.[lastSetIndex]?.restTime || 
+                    exercise.restTime || 
+                    60;
+    }
+    
+    // Start a rest period if:
+    // 1. This is a single exercise (not in a superset), OR
+    // 2. This is the last exercise in a superset
+    if (isNotInSuperset || isLastExerciseInSuperset) {
+      // If we've completed all sets in all exercises in this group
+      if (allExercisesSetsCompleted) {
+        // If there's another group, start rest period
+        if (currentGroupIndex < exerciseGroups.length - 1) {
+          setIsResting(true);
+          setRestTime(restTimeToUse);
         } else {
-          const defaultRestTime = lastExercise.workoutConfig?.sets?.[0]?.restTime || 
-                                lastExercise.restTime || 
-                                60;
-          setRestTime(defaultRestTime);
+          // If this was the last group, complete workout
+          setWorkoutComplete(true);
         }
-        
-        // Move to the next group after the rest period auto-completes
-        // (or the user can skip rest with skipRest)
+      } else if (exerciseCompleted) {
+        // If we've completed all sets for just this exercise
+        // but there are still other exercises in the group with sets to complete
+        if (isSuperset) {
+          // In a superset, move to the first exercise if we're at the end
+          setSupersetExerciseIndex(0);
+        }
       } else {
-        // If this was the last group, complete workout
-        setWorkoutComplete(true);
+        // If we still have sets to complete for this exercise,
+        // start a rest period before the next set
+        setIsResting(true);
+        setRestTime(restTimeToUse);
       }
+    } else if (isSuperset && !isLastExerciseInSuperset) {
+      // If we're in the middle of a superset, move to the next exercise without resting
+      setSupersetExerciseIndex(exerciseIndex + 1);
     }
   };
 
@@ -357,10 +408,38 @@ export const useActiveWorkout = ({ workoutId }: UseActiveWorkoutProps): UseActiv
   
   const skipRest = () => {
     setIsResting(false);
-    // Move to the next group after skipping rest
-    if (currentGroupIndex < exerciseGroups.length - 1) {
-      setCurrentGroupIndex(prev => prev + 1);
-      setSupersetExerciseIndex(0); // Reset superset index when moving to next group
+    
+    // Check if there are still sets left in the current group
+    const currentGroup = exerciseGroups[currentGroupIndex];
+    if (currentGroup) {
+      const isSuperset = currentGroup.type === 'superset';
+      
+      // Check if all exercises in this group have completed all their sets
+      const allSetsInGroupCompleted = currentGroup.exercises.every(ex => {
+        const totalSets = ex.workoutConfig?.sets?.length || ex.sets || 0;
+        const completedSets = completedSetsMap[ex.id] || 0;
+        return completedSets >= totalSets;
+      });
+      
+      if (allSetsInGroupCompleted) {
+        // If all sets are completed in this group, move to the next group
+        if (currentGroupIndex < exerciseGroups.length - 1) {
+          setCurrentGroupIndex(prev => prev + 1);
+          setSupersetExerciseIndex(0);
+        }
+      } else if (isSuperset) {
+        // For supersets, find the first exercise that still has sets to complete
+        const nextExerciseIndex = currentGroup.exercises.findIndex(ex => {
+          const totalSets = ex.workoutConfig?.sets?.length || ex.sets || 0;
+          const completedSets = completedSetsMap[ex.id] || 0;
+          return completedSets < totalSets;
+        });
+        
+        if (nextExerciseIndex !== -1) {
+          setSupersetExerciseIndex(nextExerciseIndex);
+        }
+      }
+      // For normal exercises, we stay on the same exercise if it has sets left
     }
   };
 
