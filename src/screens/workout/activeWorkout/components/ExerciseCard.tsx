@@ -3,14 +3,16 @@ import { View, Text, TouchableOpacity, StyleSheet, TextInput } from 'react-nativ
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { WorkoutExercise } from '../../../../models/Exercise';
 import { getExerciseIcon } from '../utils';
-import { CompletedSetsMap } from '../types';
+import { CompletedSetsMap, ExerciseGroup } from '../types';
 
 interface ExerciseCardProps {
+
   exercise: WorkoutExercise;
   index: number;
   isInSuperset?: boolean;
   completedSetsMap: CompletedSetsMap;
   onCompleteSet: (exerciseId: string, actualReps?: number, actualRestTime?: number) => void;
+  group?: ExerciseGroup
 }
 
 const ExerciseCard: React.FC<ExerciseCardProps> = ({
@@ -18,7 +20,8 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
   index,
   isInSuperset = false,
   completedSetsMap,
-  onCompleteSet
+  onCompleteSet,
+  group
 }) => {
   // Get total sets either from workoutConfig.sets or from exercise.sets
   const totalSets = exercise.workoutConfig?.sets?.length || exercise.sets || 0;
@@ -44,10 +47,10 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
     // Convert inputs to numbers
     const actualReps = parseInt(reps, 10) || defaultReps;
     const actualRestTime = parseInt(restTime, 10) || defaultRestTime;
-    
+
     // Call the parent handler with the actual values
     onCompleteSet(exercise.id, actualReps, actualRestTime);
-    
+
     // Reset editing state
     setIsEditing(false);
   };
@@ -55,26 +58,41 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
   return (
     <View
       style={[
-        styles.exerciseCard, 
+        styles.exerciseCard,
         isInSuperset && styles.supersetExerciseCard,
         allSetsCompleted && styles.completedExerciseCard
       ]}>
       {isInSuperset && (
         <View style={styles.supersetLabelContainer}>
-          <Icon name="lightning-bolt" size={12} color="#fff" />
-          <Text style={styles.supersetLabel}>SUPERSET</Text>
+          <View style={styles.supersetLabelContent}>
+            <Icon name="lightning-bolt" size={12} color="#5D3FD3" />
+            <Text style={styles.supersetLabel}>SUPERSET</Text>
+            
+            {/* Exercise progress indicator - on the same row as the label */}
+            <View style={styles.exerciseProgressBar}>
+              {group?.exercises.map((_, i) => (
+                <View
+                  key={i}
+                  style={[
+                    styles.progressDot,
+                    i === index && styles.activeProgressDot
+                  ]}
+                />
+              ))}
+            </View>
+          </View>
         </View>
       )}
-      
+
       <View style={styles.cardHeader}>
         <View style={[
           styles.exerciseIconContainer,
           isInSuperset && styles.supersetExerciseIconContainer
         ]}>
-          <Icon 
-            name={getExerciseIcon(exercise.type)} 
-            size={isInSuperset ? 24 : 32} 
-            color="#5D3FD3" 
+          <Icon
+            name={getExerciseIcon(exercise.type)}
+            size={isInSuperset ? 24 : 32}
+            color="#5D3FD3"
           />
         </View>
 
@@ -85,7 +103,7 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
           ]}>
             {exercise.name}
           </Text>
-          
+
           {isInSuperset && (
             <View style={styles.supersetNumberBadge}>
               <Text style={styles.supersetNumberText}>{index + 1}</Text>
@@ -93,7 +111,7 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
           )}
         </View>
       </View>
-      
+
       <View style={styles.detailsCard}>
         <View style={styles.detailRow}>
           <View style={styles.detailItem}>
@@ -140,7 +158,7 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
           </View>
         </View>
       </View>
-      
+
       {!allSetsCompleted && !isEditing && (
         <View style={styles.actionButtonsContainer}>
           <TouchableOpacity
@@ -150,7 +168,7 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
             <Icon name="pencil" size={16} color="#fff" />
             <Text style={styles.editButtonText}>Edit Values</Text>
           </TouchableOpacity>
-          
+
           <TouchableOpacity
             style={styles.completeSetButton}
             onPress={handleCompleteSet}
@@ -160,7 +178,7 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
           </TouchableOpacity>
         </View>
       )}
-      
+
       {!allSetsCompleted && isEditing && (
         <View style={styles.actionButtonsContainer}>
           <TouchableOpacity
@@ -174,7 +192,7 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
             <Icon name="close" size={16} color="#fff" />
             <Text style={styles.cancelButtonText}>Cancel</Text>
           </TouchableOpacity>
-          
+
           <TouchableOpacity
             style={styles.saveButton}
             onPress={handleCompleteSet}
@@ -196,6 +214,34 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
 };
 
 const styles = StyleSheet.create({
+  supersetLabelContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  supersetLabel: {
+    color: '#5D3FD3',
+    fontWeight: '700',
+    fontSize: 10,
+    marginLeft: 4,
+    marginRight: 8,
+  },
+  exerciseProgressBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  progressDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: 'rgba(40, 3, 3, 0.46)',
+    marginHorizontal: 2,
+  },
+  activeProgressDot: {
+    backgroundColor: 'rgb(58, 22, 205)',
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
   exerciseCard: {
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
     borderRadius: 16,
@@ -220,11 +266,11 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -10,
     right: 16,
-    backgroundColor: '#5D3FD3',
+    backgroundColor: 'white',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
-    flexDirection: 'row',
+    flexDirection: 'column',
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -232,12 +278,6 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 2,
     zIndex: 1,
-  },
-  supersetLabel: {
-    color: '#fff',
-    fontWeight: '700',
-    fontSize: 10,
-    marginLeft: 4,
   },
   cardHeader: {
     flexDirection: 'row',
