@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { ExerciseGroup } from '../types';
+import { WorkoutExercise } from '../../../../models/Exercise';
 
 interface NavigationControlsProps {
   currentGroupIndex: number;
@@ -11,6 +12,9 @@ interface NavigationControlsProps {
   onFinish: () => void;
   isFirstExercise?: boolean;
   isLastExercise?: boolean;
+  inSuperset?: boolean;
+  activeExerciseIndex?: number;
+  completedSetsMap?: Record<string, number>;
 }
 
 const NavigationControls: React.FC<NavigationControlsProps> = ({
@@ -20,14 +24,67 @@ const NavigationControls: React.FC<NavigationControlsProps> = ({
   onNext,
   onFinish,
   isFirstExercise = false,
-  isLastExercise = false
+  isLastExercise = false,
+  inSuperset = false,
+  activeExerciseIndex = 0,
+  completedSetsMap = {}
 }) => {
+  const currentGroup = exerciseGroups[currentGroupIndex];
   const nextGroup = exerciseGroups[currentGroupIndex + 1];
-  const showNextPreview = !isLastExercise && currentGroupIndex < exerciseGroups.length - 1;
+  
+  // Get the next exercise to show in preview
+  const getNextExercisePreview = (): { name: string, type: string } | null => {
+    // Case 1: In a superset with more exercises
+    if (inSuperset && currentGroup.type === 'superset') {
+      const currentExercises = currentGroup.exercises;
+      
+      // If we have more exercises in the superset
+      if (activeExerciseIndex < currentExercises.length - 1) {
+        return {
+          name: currentExercises[activeExerciseIndex + 1].name,
+          type: 'superset-next'
+        };
+      }
+      
+      // Check if any exercise in the superset still has uncompleted sets
+      const hasUncompletedSets = currentExercises.some(exercise => {
+        const totalSets = exercise.workoutConfig?.sets?.length || exercise.sets || 0;
+        const completedSets = completedSetsMap[exercise.id] || 0;
+        return completedSets < totalSets;
+      });
+      
+      // If we have uncompleted sets, loop back to the first exercise in the superset
+      if (hasUncompletedSets) {
+        return {
+          name: currentExercises[0].name,
+          type: 'superset-loop'
+        };
+      }
+    }
+    
+    // Case 2: Moving to the next exercise group
+    if (!isLastExercise && currentGroupIndex < exerciseGroups.length - 1) {
+      if (nextGroup.type === 'superset') {
+        return {
+          name: `Superset: ${nextGroup.exercises.map(e => e.name).join(' + ')}`,
+          type: 'next-group-superset'
+        };
+      } else {
+        return {
+          name: nextGroup.exercises[0]?.name,
+          type: 'next-group-single'
+        };
+      }
+    }
+    
+    return null;
+  };
+  
+  const nextExerciseInfo = getNextExercisePreview();
+  const showNextPreview = nextExerciseInfo !== null;
 
   return (
     <>
-      {/* Navigation buttons for exercise groups */}
       <View style={styles.navigationButtons}>
         <TouchableOpacity 
           style={[styles.navButton, isFirstExercise ? styles.navButtonDisabled : null]}
@@ -66,15 +123,19 @@ const NavigationControls: React.FC<NavigationControlsProps> = ({
         </TouchableOpacity>
       </View>
 
-      {/* Next exercise preview */}
       {showNextPreview && (
         <View style={styles.nextExerciseContainer}>
-          <Text style={styles.nextExerciseLabel}>NEXT UP</Text>
-          <Text style={styles.nextExerciseName}>
-            {nextGroup.type === 'superset' 
-              ? `Superset: ${nextGroup.exercises.map(e => e.name).join(' + ')}` 
-              : nextGroup.exercises[0]?.name}
+          <Text style={styles.nextExerciseLabel}>
+            NEXT
           </Text>
+          <View style={styles.nextExerciseContent}>
+            {nextExerciseInfo.type.includes('superset') && (
+              <Icon name="lightning-bolt" size={16} color="#5D3FD3" style={styles.supersetIcon} />
+            )}
+            <Text style={styles.nextExerciseName}>
+              {nextExerciseInfo.name}
+            </Text>
+          </View>
         </View>
       )}
 
@@ -136,11 +197,18 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     letterSpacing: 1,
   },
+  nextExerciseContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  supersetIcon: {
+    marginRight: 6,
+  },
   nextExerciseName: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#5D3FD3',
-    marginTop: 4,
   },
   finishWorkoutButton: {
     backgroundColor: 'rgba(255, 255, 255, 0.85)',
