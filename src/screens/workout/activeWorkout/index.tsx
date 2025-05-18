@@ -81,16 +81,31 @@ const ActiveWorkoutScreen: React.FC = () => {
   };
   
   const handleNext = () => {
-    // If we're in a superset and not at the last exercise, go to next exercise in superset
-    if (
-      currentGroup.type === 'superset' && 
-      supersetExerciseIndex < currentGroup.exercises.length - 1
-    ) {
-      handleNextSupersetExercise();
-    } else {
-      // Otherwise go to next group
-      handleNextExerciseGroup();
+    // Check if we're in a superset
+    if (currentGroup.type === 'superset') {
+      // If we're not at the last exercise in the superset, go to next exercise in superset
+      if (supersetExerciseIndex < currentGroup.exercises.length - 1) {
+        handleNextSupersetExercise();
+        return;
+      }
+      
+      // If we're at the last exercise but there are still sets left in the superset,
+      // go back to the first exercise of the superset
+      const hasUncompletedSets = currentGroup.exercises.some(exercise => {
+        const totalSets = exercise.workoutConfig?.sets?.length || exercise.sets || 0;
+        const completedSets = completedSetsMap[exercise.id] || 0;
+        return completedSets < totalSets;
+      });
+      
+      if (hasUncompletedSets) {
+        // Reset to the first exercise in the superset
+        updateSupersetExerciseIndex(0);
+        return;
+      }
     }
+    
+    // Otherwise go to next group (either not in a superset or all sets completed)
+    handleNextExerciseGroup();
   };
 
   const isFirstExercise = currentGroupIndex === 0 && 
@@ -150,6 +165,10 @@ const ActiveWorkoutScreen: React.FC = () => {
             onFinish={finishWorkout}
             isFirstExercise={isFirstExercise}
             isLastExercise={isLastExercise}
+            // Pass new props required for unified exercise preview
+            inSuperset={currentGroup.type === 'superset'}
+            activeExerciseIndex={supersetExerciseIndex}
+            completedSetsMap={completedSetsMap}
           />
         </ScrollView>
       )}
