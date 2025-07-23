@@ -4,7 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import ExerciseCard from '../../components/exercise/ExerciseCard';
 import { fetchExercises } from '../../api/exerciseApi';
-import BackgroundContainer from '../../components/common/BackgroundContainer';
+
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { Exercise } from '../../models/Exercise';
 import { ExerciseStackParamList } from '../../navigation/ExerciseNavigator';
@@ -72,7 +72,7 @@ const ExerciseListScreen = () => {
   };
 
   return (
-    <BackgroundContainer>
+    <View style={{ flex: 1, backgroundColor: 'transparent' }}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Exercise Library</Text>
         <TouchableOpacity 
@@ -110,7 +110,7 @@ const ExerciseListScreen = () => {
           }
         />
       )}
-    </BackgroundContainer>
+    </View>
   );
 };
 

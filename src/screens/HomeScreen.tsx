@@ -1,70 +1,26 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { WorkoutContext, Workout } from '../contexts/WorkoutContext';
 import { RootStackParamList } from '../navigation/types';
-import BackgroundContainer from '../components/common/BackgroundContainer';
+import EmptyWorkoutState from '../components/common/EmptyWorkoutState';
+import { useWorkoutScheduling } from '../hooks/useWorkoutScheduling';
 
 const HomeScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { workouts } = useContext(WorkoutContext);
-  const [todaysWorkout, setTodaysWorkout] = useState<Workout | null>(null);
-  const [elapsedTime, setElapsedTime] = useState(0);
-  const [isTimerActive, setIsTimerActive] = useState(false);
-
-  useEffect(() => {
-    // In a real app, this would be based on user's schedule or preferences
-    // For now, just pick the first workout or a default one
-    setTodaysWorkout(workouts[0] || {
-      id: 'default',
-      name: 'Full Body Workout',
-      description: 'A comprehensive workout targeting all major muscle groups',
-      duration: 60,
-      difficulty: 'medium',
-      exercises: [
-        {
-          id: '1',
-          name: 'Barbell Squat',
-          type: 'strength',
-          sets: 4,
-          reps: 10,
-          restTime: 90
-        },
-        {
-          id: '2',
-          name: 'Bench Press',
-          type: 'strength',
-          sets: 3,
-          reps: 12,
-          restTime: 60
-        }
-      ]
-    });
-  }, [workouts]);
-
-  useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
-    if (isTimerActive) {
-      interval = setInterval(() => {
-        setElapsedTime(prev => prev + 1);
-      }, 1000);
-    }
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [isTimerActive]);
-
-  const formatTime = (seconds: number): string => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
+  const { 
+    getTodayScheduledWorkout, 
+    getTodayWorkout 
+  } = useWorkoutScheduling();
+  
+  // Get today's scheduled workout and workout details directly from context
+  const todaysScheduledWorkout = getTodayScheduledWorkout();
+  const todaysWorkout = getTodayWorkout();
 
   const handleStartWorkout = () => {
     if (todaysWorkout) {
-      navigation.navigate('Workout', {
+      navigation.navigate('Workouts', {
         screen: 'ActiveWorkout',
         params: { workoutId: todaysWorkout.id }
       });
@@ -72,47 +28,43 @@ const HomeScreen = () => {
   };
 
   const handleCreateWorkout = () => {
-    // Navigate to the Workout tab and then to CreateWorkout screen
-    navigation.navigate('Workout', {
+    // Navigate to the Workouts tab and then to CreateWorkout screen
+    navigation.navigate('Workouts', {
       screen: 'CreateWorkout'
     });
   };
 
-  const toggleTimer = () => {
-    setIsTimerActive(!isTimerActive);
+  const handleScheduleWorkout = () => {
+    // Navigate to the Calendar tab
+    navigation.navigate('Calendar');
   };
 
   if (!todaysWorkout) {
     return (
-      <BackgroundContainer>
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>No workout planned for today</Text>
-          <TouchableOpacity 
-            style={styles.createButton}
-            onPress={handleCreateWorkout}
-          >
-            <Text style={styles.createButtonText}>Create Workout</Text>
-          </TouchableOpacity>
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.greeting}>Today's Workout</Text>
         </View>
-      </BackgroundContainer>
+        
+        <EmptyWorkoutState
+          onCreateWorkout={handleScheduleWorkout}
+          title="No Workout Scheduled"
+          description="Schedule a workout for today to start your fitness journey!"
+        />
+      </View>
     );
   }
 
   return (
-    <BackgroundContainer>
-      <ScrollView style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.greeting}>Today's Workout</Text>
-          <View style={styles.timerContainer}>
-            <TouchableOpacity onPress={toggleTimer} style={styles.timerButton}>
-              <Icon name={isTimerActive ? 'pause' : 'play'} size={20} color="#fff" />
-              <Text style={styles.timerText}>{formatTime(elapsedTime)}</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+    <ScrollView style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.greeting}>Today's Workout</Text>
+      </View>
 
         <View style={styles.workoutCard}>
-          <Text style={styles.workoutName}>{todaysWorkout.name}</Text>
+          <View style={styles.workoutHeader}>
+            <Text style={styles.workoutName}>{todaysWorkout.name}</Text>
+          </View>
           <Text style={styles.workoutDescription}>{todaysWorkout.description}</Text>
           
           <View style={styles.statsRow}>
@@ -161,13 +113,14 @@ const HomeScreen = () => {
           ))}
         </View>
       </ScrollView>
-    </BackgroundContainer>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingTop: 20,
+    backgroundColor: 'transparent',
   },
   header: {
     flexDirection: 'row',
@@ -185,22 +138,6 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
   },
-  timerContainer: {
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
-    borderRadius: 20,
-    padding: 8,
-  },
-  timerButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-  },
-  timerText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-    marginLeft: 8,
-  },
   workoutCard: {
     backgroundColor: 'rgba(255, 255, 255, 0.85)',
     borderRadius: 16,
@@ -212,11 +149,16 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
+  workoutHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
   workoutName: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#333',
-    marginBottom: 8,
   },
   workoutDescription: {
     fontSize: 14,
@@ -294,32 +236,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     marginTop: 2,
-  },
-  emptyContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 20,
-  },
-  emptyText: {
-    fontSize: 18,
-    color: '#fff',
-    textAlign: 'center',
-    marginBottom: 20,
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  },
-  createButton: {
-    backgroundColor: '#5D3FD3',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 30,
-  },
-  createButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
   },
 });
 

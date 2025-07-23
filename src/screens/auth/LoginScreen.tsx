@@ -12,7 +12,7 @@ import { useNavigation } from '@react-navigation/native';
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
 import { AuthContext } from '../../contexts/AuthContext';
-import BackgroundContainer from '../../components/common/BackgroundContainer';
+
 import Logger from '../../utils/logger';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
@@ -100,7 +100,6 @@ const LoginScreen = () => {
   };
 
   return (
-    <BackgroundContainer>
       <Animated.View 
         style={[
           styles.formContainer, 
@@ -161,7 +160,6 @@ const LoginScreen = () => {
           <Text style={styles.debugText}>View Logs</Text>
         </TouchableOpacity>
       </Animated.View>
-    </BackgroundContainer>
   );
 };
 

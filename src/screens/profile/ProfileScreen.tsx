@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-nati
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { AuthContext } from '../../contexts/AuthContext';
 import { WorkoutContext } from '../../contexts/WorkoutContext';
-import BackgroundContainer from '../../components/common/BackgroundContainer';
+
 
 const ProfileScreen = () => {
   const { user } = useContext(AuthContext);
@@ -14,7 +14,6 @@ const ProfileScreen = () => {
     total + workout.exercises.length, 0);
 
   return (
-    <BackgroundContainer>
       <ScrollView style={styles.container}>
         {/* User Info Section */}
         <View style={styles.userSection}>
@@ -67,13 +66,13 @@ const ProfileScreen = () => {
           ))}
         </View>
       </ScrollView>
-    </BackgroundContainer>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: 'transparent',
   },
   userSection: {
     alignItems: 'center',

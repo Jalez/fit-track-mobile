@@ -5,7 +5,8 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { WorkoutContext } from '../../contexts/WorkoutContext';
 import { WorkoutStackParamList } from '../../navigation/WorkoutNavigator';
 import WorkoutCard from '../../components/workout/WorkoutCard';
-import BackgroundContainer from '../../components/common/BackgroundContainer';
+
+import EmptyWorkoutState from '../../components/common/EmptyWorkoutState';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 type WorkoutListNavigationProp = StackNavigationProp<WorkoutStackParamList, 'WorkoutList'>;
@@ -18,8 +19,13 @@ const WorkoutListScreen = () => {
     navigation.navigate('CreateWorkout');
   };
 
+  const handleScheduleWorkout = () => {
+    // For now, just create a workout since we can't navigate to Calendar from here
+    handleCreateWorkout();
+  };
+
   return (
-    <BackgroundContainer>
+    <View style={{ flex: 1, backgroundColor: 'transparent' }}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Workouts</Text>
         <TouchableOpacity 
@@ -37,20 +43,14 @@ const WorkoutListScreen = () => {
         contentContainerStyle={styles.listContainer}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Icon name="dumbbell" size={60} color="rgba(93, 63, 211, 0.3)" />
-            <Text style={styles.emptyText}>No workouts yet</Text>
-            <Text style={styles.emptySubtext}>Create your first workout to get started</Text>
-            <TouchableOpacity 
-              style={styles.createButton}
-              onPress={handleCreateWorkout}
-            >
-              <Text style={styles.createButtonText}>Create Workout</Text>
-            </TouchableOpacity>
-          </View>
+          <EmptyWorkoutState
+            onCreateWorkout={handleScheduleWorkout}
+            title="No Workouts Yet"
+            description="Create your first workout to start building your fitness routine!"
+          />
         }
       />
-    </BackgroundContainer>
+    </View>
   );
 };
 
@@ -91,49 +91,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 8,
     paddingBottom: 20,
-  },
-  emptyContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 60,
-  },
-  emptyText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginTop: 16,
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  },
-  emptySubtext: {
-    fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.7)',
-    marginTop: 8,
-    marginBottom: 24,
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  },
-  createButton: {
-    backgroundColor: '#5D3FD3',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 30,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  createButtonText: {
-    fontSize: 16,
-    color: '#fff',
-    fontWeight: '600',
+    backgroundColor: 'transparent',
   },
 });
 
