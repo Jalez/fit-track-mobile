@@ -8,6 +8,7 @@ import AppNavigator from './src/navigation/AppNavigator';
 import { AuthProvider } from './src/contexts/AuthContext';
 import { WorkoutProvider } from './src/contexts/WorkoutContext';
 import ErrorBoundary from './src/components/common/ErrorBoundary';
+import BackgroundContainer from './src/components/common/BackgroundContainer';
 import Logger from './src/utils/logger';
 // Ensure Reanimated is correctly set up
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -169,14 +170,13 @@ const App = () => {
     return (
       <CustomErrorBoundary>
         <GestureHandlerRootView style={{ flex: 1 }}>
-          <View style={styles.container}>
-            <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
+          <BackgroundContainer>
             <AuthProvider>
               <WorkoutProvider>
                 <AppNavigator />
               </WorkoutProvider>
             </AuthProvider>
-          </View>
+          </BackgroundContainer>
         </GestureHandlerRootView>
       </CustomErrorBoundary>
     );
